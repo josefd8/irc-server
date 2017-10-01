@@ -28,6 +28,7 @@ public class ChatServerHandler extends ChannelInboundMessageHandlerAdapter<Strin
 
         if (message.indexOf("/leave") > -1 && message.substring(0,6).matches("/leave")){
             chatRooms.forEach(CR -> CR.leaveRoom(channel));
+            this.getUser(channel).setStatus(false);
             channel.flush();
             channel.disconnect();
             channel.close();
@@ -54,10 +55,13 @@ public class ChatServerHandler extends ChannelInboundMessageHandlerAdapter<Strin
                     newUser.setPassword(password);
                     newUser.setChannel(channel);
                     newUser.setStatus(true);
+                    authenticatedUsers.add(newUser);
+                    user = newUser;
                 }
 
                 if (user.getPassword().matches(password)){
                     user.setStatus(true);
+                    user.setChannel(channel);
                 } else {
                     channel.write("Invalid password! \n");
                 }
@@ -72,6 +76,13 @@ public class ChatServerHandler extends ChannelInboundMessageHandlerAdapter<Strin
 
         if (message.indexOf("/join ") > -1 && message.substring(0,5).matches("/join")){
 
+            if (!this.isLogged(channel)){
+                channel.write("You have to log in to join a channel \n");
+                return;
+            }
+
+            AuthenticatedUser user = this.getUser(channel);
+
             String[] array = message.split(" ");
 
             if (array.length > 1){
@@ -80,13 +91,13 @@ public class ChatServerHandler extends ChannelInboundMessageHandlerAdapter<Strin
 
                 for (ChatRoom chatRoom : chatRooms){
                     if (chatRoom.getRoomName().matches(roomName)){
-                        chatRoom.joinRoom(channel, "test");
+                        chatRoom.joinRoom(channel, user.getUsername());
                         return;
                     }
                 }
 
                 ChatRoom chatRoom = new ChatRoom(roomName);
-                chatRoom.joinRoom(channel,"test");
+                chatRoom.joinRoom(channel,user.getUsername());
                 chatRooms.add(chatRoom);
 
             }
@@ -96,6 +107,15 @@ public class ChatServerHandler extends ChannelInboundMessageHandlerAdapter<Strin
 
         chatRooms.forEach(CR -> CR.broadcastMessage(channel, message));
 
+    }
+
+    private boolean isLogged(Channel channel){
+        AuthenticatedUser user = this.getUser(channel);
+        if (user != null){
+            return user.isStatus();
+        }
+
+        return false;
     }
 
     private AuthenticatedUser getUser(Channel channel){
@@ -111,7 +131,7 @@ public class ChatServerHandler extends ChannelInboundMessageHandlerAdapter<Strin
 
     private AuthenticatedUser getUser(String username){
         for (AuthenticatedUser user : authenticatedUsers){
-            if (user.getUsername().matches("username")){
+            if (user.getUsername().matches(username)){
                 return user;
             }
         }

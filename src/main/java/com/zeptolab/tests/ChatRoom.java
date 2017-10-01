@@ -26,11 +26,12 @@ public class ChatRoom {
 
     public void joinRoom(Channel user, String username){
 
-        if (room.size() == 10) {
-            throw new IndexOutOfBoundsException("Cannot add user to chat room. Room is already full! \n");
+        if (room.size() >= 10) {
+            user.write("Cannot add user to chat room. Room is already full! \n");
+            return;
         }
         room.add(user);
-        userMapping.put(user.localAddress().toString(), username);
+        userMapping.put(user.remoteAddress().toString(), username);
         room.write("[" + username + "] joined the room! \n");
 
         for( String item : messages ){
@@ -62,7 +63,7 @@ public class ChatRoom {
     public void showUsers(Channel requester){
         if (room.contains(requester)){
             for (Channel channel : room){
-                requester.write(channel.remoteAddress() + "\n");
+                requester.write("[" + userMapping.get(requester.remoteAddress().toString()) + "]" + "\n");
             }
         }
     }
