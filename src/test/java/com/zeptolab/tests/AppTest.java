@@ -4,6 +4,8 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import java.util.*;
+
 /**
  * Unit test for simple IRCServer.
  */
@@ -33,6 +35,24 @@ public class AppTest
      */
     public void testApp()
     {
-        assertTrue( true );
+        Queue<String> messages = new LinkedList<String>();
+
+        messages.add("1");
+        messages.add("2");
+        messages.add("3");
+        messages.add("4");
+
+        for( String item : messages ){
+            System.out.print(item + "\n");
+        }
+
+        messages.remove();
+        messages.add("5");
+
+        for( String item : messages ){
+            System.out.print(item + "\n");
+        }
+
     }
+
 }
